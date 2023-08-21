@@ -3,26 +3,26 @@ const fs = require('fs');
 const _ = require('lodash');
 
 module.exports = class extends Base {
-  async infoAction() {
-    const userInfo = await this.model('user').where({id: this.getLoginUserId()}).find();
-    delete userInfo.password;
-    return this.json(userInfo);
-  }
+	async infoAction() {
+		const userInfo = await this.model('user').where({id: this.getLoginUserId()}).find();
+		delete userInfo.password;
+		return this.json(userInfo);
+	}
 
-  /**
-   * 保存用户头像
-   * @returns {Promise.<void>}
-   */
-  async saveAvatarAction() {
-    const avatar = this.file('avatar');
-    if (think.isEmpty(avatar)) {
-      return this.fail('保存失败');
-    }
+	/**
+	* 保存用户头像
+	* @returns {Promise.<void>}
+	*/
+	async saveAvatarAction() {
+		const avatar = this.file('avatar');
+		if (think.isEmpty(avatar)) {
+			return this.fail('保存失败');
+		}
 
-    const avatarPath = think.RESOURCE_PATH + `/static/user/avatar/${this.getLoginUserId()}.` + _.last(_.split(avatar.path, '.'));
+		const avatarPath = think.RESOURCE_PATH + `/static/user/avatar/${this.getLoginUserId()}.` + _.last(_.split(avatar.path, '.'));
 
-    fs.rename(avatar.path, avatarPath, function(res) {
-      return this.success();
-    });
-  }
+		fs.rename(avatar.path, avatarPath, function(res) {
+			return this.success();
+		});
+	}
 };

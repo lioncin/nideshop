@@ -34,16 +34,20 @@ module.exports = class extends Base {
   async currentAction() {
     const categoryId = this.get('id');
     const model = this.model('category');
-
+    const fetchSubCategories = async(category) => {
+      const subCategories = await model.where({'parent_id': category.id}).select();
+      for (let i = 0; i < subCategories.length; i++) {
+        subCategories[i].subCategoryList = await fetchSubCategories(subCategories[i]);
+      }
+      return subCategories;
+    };
     let currentCategory = null;
     if (categoryId) {
       currentCategory = await model.where({'id': categoryId}).find();
+      if (currentCategory && currentCategory.id) {
+        currentCategory.subCategoryList = await fetchSubCategories(currentCategory);
+      }
     }
-    // 获取子分类数据
-    if (currentCategory && currentCategory.id) {
-      currentCategory.subCategoryList = await model.where({'parent_id': currentCategory.id}).select();
-    }
-
     return this.success({
       currentCategory: currentCategory
     });

@@ -1,3 +1,4 @@
+/* eslint-disable no-inner-declarations */
 const Base = require('./base.js');
 
 module.exports = class extends Base {
@@ -92,8 +93,33 @@ module.exports = class extends Base {
   }
 
   async listAction() {
+    const brand = this.get('brand');
+    const category = this.get('category');
     const model = this.model('goods');
-    const list = await model.limit(100).select();
+    const whereMap = {};
+    if (!think.isEmpty(brand)) {
+      whereMap.brand_id = brand;
+    }
+
+    if (!think.isEmpty(category)) {
+      async function getDescendantCategoryIds(currentCategoryId, ids = []) {
+        const categoryModel = this.model('category');
+        const childrenIds = await categoryModel.where({parent_id: currentCategoryId}).getField('id', 100);
+
+        if (childrenIds.length > 0) {
+          ids.push(...childrenIds);
+          for (const childId of childrenIds) {
+            await getDescendantCategoryIds.call(this, childId, ids);
+          }
+        }
+        return ids;
+      }
+      const allCategoryIds = await getDescendantCategoryIds.call(this, category);
+      if (allCategoryIds.length > 0) {
+        whereMap.category_id = {'in': allCategoryIds};
+      }
+    }
+    const list = await model.where(whereMap).limit(100).select();
     return this.success(list);
   }
 

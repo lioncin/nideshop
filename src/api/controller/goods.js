@@ -93,10 +93,21 @@ module.exports = class extends Base {
   }
 
   async listAction() {
+    const price = this.get('price');
+    const attribute = this.get('attribute');
     const brand = this.get('brand');
     const category = this.get('category');
     const model = this.model('goods');
     const whereMap = {};
+
+    if (!think.isEmpty(price)) {
+      whereMap.price = price;
+    }
+
+    if (!think.isEmpty(attribute)) {
+      whereMap['Attribute'] = ['like', `%${attribute}%`];
+    }
+
     if (!think.isEmpty(brand)) {
       whereMap.brand_id = brand;
     }

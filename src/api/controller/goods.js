@@ -1,9 +1,9 @@
 /* eslint-disable no-inner-declarations */
-const Base = require('./base.js');
+const Base = require("./base.js");
 
 module.exports = class extends Base {
   async indexAction() {
-    const model = this.model('goods');
+    const model = this.model("goods");
     const goodsList = await model.select();
 
     return this.success(goodsList);
@@ -14,12 +14,12 @@ module.exports = class extends Base {
    * @returns {Promise.<Promise|PreventPromise|void>}
    */
   async skuAction() {
-    const goodsId = this.get('id');
-    const model = this.model('goods');
+    const goodsId = this.get("id");
+    const model = this.model("goods");
 
     return this.success({
       specificationList: await model.getSpecificationList(goodsId),
-      productList: await model.getProductList(goodsId)
+      productList: await model.getProductList(goodsId),
     });
   }
 
@@ -28,38 +28,64 @@ module.exports = class extends Base {
    * @returns {Promise.<Promise|PreventPromise|void>}
    */
   async detailAction() {
-    const goodsId = this.get('id');
-    const model = this.model('goods');
+    const goodsId = this.get("id");
+    const model = this.model("goods");
 
-    const info = await model.where({'id': goodsId}).find();
-    const gallery = await this.model('goods_gallery').where({goods_id: goodsId}).limit(4).select();
-    const attribute = await this.model('goods_attribute').field('nideshop_goods_attribute.value, nideshop_attribute.name').join('nideshop_attribute ON nideshop_goods_attribute.attribute_id=nideshop_attribute.id').order({'nideshop_goods_attribute.id': 'asc'}).where({'nideshop_goods_attribute.goods_id': goodsId}).select();
-    const issue = await this.model('goods_issue').select();
-    const brand = await this.model('brand').where({id: info.brand_id}).find();
-    const commentCount = await this.model('comment').where({value_id: goodsId, type_id: 0}).count();
-    const hotComment = await this.model('comment').where({value_id: goodsId, type_id: 0}).find();
+    const info = await model.where({ id: goodsId }).find();
+    const gallery = await this.model("goods_gallery")
+      .where({ goods_id: goodsId })
+      .limit(4)
+      .select();
+    const attribute = await this.model("goods_attribute")
+      .field("nideshop_goods_attribute.value, nideshop_attribute.name")
+      .join(
+        "nideshop_attribute ON nideshop_goods_attribute.attribute_id=nideshop_attribute.id"
+      )
+      .order({ "nideshop_goods_attribute.id": "asc" })
+      .where({ "nideshop_goods_attribute.goods_id": goodsId })
+      .select();
+    const issue = await this.model("goods_issue").select();
+    const brand = await this.model("brand").where({ id: info.brand_id }).find();
+    const commentCount = await this.model("comment")
+      .where({ value_id: goodsId, type_id: 0 })
+      .count();
+    const hotComment = await this.model("comment")
+      .where({ value_id: goodsId, type_id: 0 })
+      .find();
     let commentInfo = {};
     if (!think.isEmpty(hotComment)) {
-      const commentUser = await this.model('user').field(['nickname', 'username', 'avatar']).where({id: hotComment.user_id}).find();
+      const commentUser = await this.model("user")
+        .field(["nickname", "username", "avatar"])
+        .where({ id: hotComment.user_id })
+        .find();
       commentInfo = {
-        content: Buffer.from(hotComment.content, 'base64').toString(),
+        content: Buffer.from(hotComment.content, "base64").toString(),
         add_time: think.datetime(new Date(hotComment.add_time * 1000)),
         nickname: commentUser.nickname,
         avatar: commentUser.avatar,
-        pic_list: await this.model('comment_picture').where({comment_id: hotComment.id}).select()
+        pic_list: await this.model("comment_picture")
+          .where({ comment_id: hotComment.id })
+          .select(),
       };
     }
 
     const comment = {
       count: commentCount,
-      data: commentInfo
+      data: commentInfo,
     };
 
     // 当前用户是否收藏
-    const userHasCollect = await this.model('collect').isUserHasCollect(this.getLoginUserId(), 0, goodsId);
+    const userHasCollect = await this.model("collect").isUserHasCollect(
+      this.getLoginUserId(),
+      0,
+      goodsId
+    );
 
     // 记录用户的足迹 TODO
-    await await this.model('footprint').addFootprint(this.getLoginUserId(), goodsId);
+    await await this.model("footprint").addFootprint(
+      this.getLoginUserId(),
+      goodsId
+    );
 
     // return this.json(jsonData);
     return this.success({
@@ -71,7 +97,7 @@ module.exports = class extends Base {
       comment: comment,
       brand: brand,
       specificationList: await model.getSpecificationList(goodsId),
-      productList: await model.getProductList(goodsId)
+      productList: await model.getProductList(goodsId),
     });
   }
 
@@ -80,42 +106,56 @@ module.exports = class extends Base {
    * @returns {Promise.<*>}
    */
   async categoryAction() {
-    const model = this.model('category');
-    const currentCategory = await model.where({id: this.get('id')}).find();
-    const parentCategory = await model.where({id: currentCategory.parent_id}).find();
-    const brotherCategory = await model.where({parent_id: currentCategory.parent_id}).select();
+    const model = this.model("category");
+    const currentCategory = await model.where({ id: this.get("id") }).find();
+    const parentCategory = await model
+      .where({ id: currentCategory.parent_id })
+      .find();
+    const brotherCategory = await model
+      .where({ parent_id: currentCategory.parent_id })
+      .select();
 
     return this.success({
       currentCategory: currentCategory,
       parentCategory: parentCategory,
-      brotherCategory: brotherCategory
+      brotherCategory: brotherCategory,
     });
   }
 
   async listAction() {
-    const price = this.get('price');
-    const attribute = this.get('attribute');
-    const brand = this.get('brand');
-    const category = this.get('category');
-    const model = this.model('goods');
+    const price = this.get("price");
+    const attribute = this.get("attribute");
+    const brand = this.get("brand");
+    const category = this.get("category");
+    const keyword = this.get("keyword");
+
+    const model = this.model("goods");
     const whereMap = {};
 
+    if (!think.isEmpty(keyword)) {
+      whereMap.name = ["like", `%${keyword}%`];
+    }
+
     if (!think.isEmpty(price)) {
-      whereMap.price = price;
+      const priceList = price.split("-");
+      const min = priceList[0];
+      const max = priceList[1];
+      whereMap.retail_price = ["between", [min, max]];
     }
 
     if (!think.isEmpty(attribute)) {
-      whereMap['Attribute'] = ['like', `%${attribute}%`];
+      whereMap["Attribute"] = ["like", `%${attribute}%`];
     }
-
     if (!think.isEmpty(brand)) {
       whereMap.brand_id = brand;
     }
 
     if (!think.isEmpty(category)) {
       async function getDescendantCategoryIds(currentCategoryId, ids = []) {
-        const categoryModel = this.model('category');
-        const childrenIds = await categoryModel.where({parent_id: currentCategoryId}).getField('id', 100);
+        const categoryModel = this.model("category");
+        const childrenIds = await categoryModel
+          .where({ parent_id: currentCategoryId })
+          .getField("id", 100);
 
         if (childrenIds.length > 0) {
           ids.push(...childrenIds);
@@ -125,9 +165,12 @@ module.exports = class extends Base {
         }
         return ids;
       }
-      const allCategoryIds = await getDescendantCategoryIds.call(this, category);
+      const allCategoryIds = await getDescendantCategoryIds.call(
+        this,
+        category
+      );
       if (allCategoryIds.length > 0) {
-        whereMap.category_id = {'in': allCategoryIds};
+        whereMap.category_id = { in: allCategoryIds };
       }
     }
     const list = await model.where(whereMap).limit(100).select();
@@ -228,41 +271,53 @@ module.exports = class extends Base {
    * @returns {Promise.<Promise|void|PreventPromise>}
    */
   async filterAction() {
-    const categoryId = this.get('categoryId');
-    const keyword = this.get('keyword');
-    const isNew = this.get('isNew');
-    const isHot = this.get('isHot');
+    const categoryId = this.get("categoryId");
+    const keyword = this.get("keyword");
+    const isNew = this.get("isNew");
+    const isHot = this.get("isHot");
 
-    const goodsQuery = this.model('goods');
+    const goodsQuery = this.model("goods");
 
     if (!think.isEmpty(categoryId)) {
-      goodsQuery.where({category_id: {'in': await this.model('category').getChildCategoryId(categoryId)}});
+      goodsQuery.where({
+        category_id: {
+          in: await this.model("category").getChildCategoryId(categoryId),
+        },
+      });
     }
 
     if (!think.isEmpty(isNew)) {
-      goodsQuery.where({is_new: isNew});
+      goodsQuery.where({ is_new: isNew });
     }
 
     if (!think.isEmpty(isHot)) {
-      goodsQuery.where({is_hot: isHot});
+      goodsQuery.where({ is_hot: isHot });
     }
 
     if (!think.isEmpty(keyword)) {
-      goodsQuery.where({name: {'like': `%${keyword}%`}});
+      goodsQuery.where({ name: { like: `%${keyword}%` } });
     }
 
-    let filterCategory = [{
-      'id': 0,
-      'name': '全部'
-    }];
+    let filterCategory = [
+      {
+        id: 0,
+        name: "全部",
+      },
+    ];
 
     // 二级分类id
-    const categoryIds = await goodsQuery.getField('category_id', 10000);
+    const categoryIds = await goodsQuery.getField("category_id", 10000);
     if (!think.isEmpty(categoryIds)) {
       // 查找二级分类的parent_id
-      const parentIds = await this.model('category').where({id: {'in': categoryIds}}).getField('parent_id', 10000);
+      const parentIds = await this.model("category")
+        .where({ id: { in: categoryIds } })
+        .getField("parent_id", 10000);
       // 一级分类
-      const parentCategory = await this.model('category').field(['id', 'name']).order({'sort_order': 'asc'}).where({'id': {'in': parentIds}}).select();
+      const parentCategory = await this.model("category")
+        .field(["id", "name"])
+        .order({ sort_order: "asc" })
+        .where({ id: { in: parentIds } })
+        .select();
 
       if (!think.isEmpty(parentCategory)) {
         filterCategory = filterCategory.concat(parentCategory);
@@ -279,10 +334,11 @@ module.exports = class extends Base {
   async newAction() {
     return this.success({
       bannerInfo: {
-        url: '',
-        name: '坚持初心，为你寻觅世间好物',
-        img_url: 'http://yanxuan.nosdn.127.net/8976116db321744084774643a933c5ce.png'
-      }
+        url: "",
+        name: "坚持初心，为你寻觅世间好物",
+        img_url:
+          "http://yanxuan.nosdn.127.net/8976116db321744084774643a933c5ce.png",
+      },
     });
   }
 
@@ -293,10 +349,11 @@ module.exports = class extends Base {
   async hotAction() {
     return this.success({
       bannerInfo: {
-        url: '',
-        name: '大家都在买的严选好物',
-        img_url: 'http://yanxuan.nosdn.127.net/8976116db321744084774643a933c5ce.png'
-      }
+        url: "",
+        name: "大家都在买的严选好物",
+        img_url:
+          "http://yanxuan.nosdn.127.net/8976116db321744084774643a933c5ce.png",
+      },
     });
   }
 
@@ -306,20 +363,29 @@ module.exports = class extends Base {
    */
   async relatedAction() {
     // 大家都在看商品,取出关联表的商品，如果没有则随机取同分类下的商品
-    const model = this.model('goods');
-    const goodsId = this.get('id');
-    const relatedGoodsIds = await this.model('related_goods').where({goods_id: goodsId}).getField('related_goods_id');
+    const model = this.model("goods");
+    const goodsId = this.get("id");
+    const relatedGoodsIds = await this.model("related_goods")
+      .where({ goods_id: goodsId })
+      .getField("related_goods_id");
     let relatedGoods = null;
     if (think.isEmpty(relatedGoodsIds)) {
       // 查找同分类下的商品
-      const goodsCategory = await model.where({id: goodsId}).find();
-      relatedGoods = await model.where({category_id: goodsCategory.category_id}).field(['id', 'name', 'list_pic_url', 'retail_price']).limit(8).select();
+      const goodsCategory = await model.where({ id: goodsId }).find();
+      relatedGoods = await model
+        .where({ category_id: goodsCategory.category_id })
+        .field(["id", "name", "list_pic_url", "retail_price"])
+        .limit(8)
+        .select();
     } else {
-      relatedGoods = await model.where({id: ['IN', relatedGoodsIds]}).field(['id', 'name', 'list_pic_url', 'retail_price']).select();
+      relatedGoods = await model
+        .where({ id: ["IN", relatedGoodsIds] })
+        .field(["id", "name", "list_pic_url", "retail_price"])
+        .select();
     }
 
     return this.success({
-      goodsList: relatedGoods
+      goodsList: relatedGoods,
     });
   }
 
@@ -328,10 +394,12 @@ module.exports = class extends Base {
    * @returns {Promise.<Promise|PreventPromise|void>}
    */
   async countAction() {
-    const goodsCount = await this.model('goods').where({is_delete: 0, is_on_sale: 1}).count('id');
+    const goodsCount = await this.model("goods")
+      .where({ is_delete: 0, is_on_sale: 1 })
+      .count("id");
 
     return this.success({
-      goodsCount: goodsCount
+      goodsCount: goodsCount,
     });
   }
 };

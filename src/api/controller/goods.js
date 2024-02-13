@@ -1,3 +1,6 @@
+/* eslint-disable eqeqeq */
+/* eslint-disable comma-dangle */
+/* eslint-disable quotes */
 /* eslint-disable no-inner-declarations */
 const Base = require("./base.js");
 
@@ -169,6 +172,9 @@ module.exports = class extends Base {
         this,
         category
       );
+      if (allCategoryIds.length == 0) {
+        allCategoryIds.push(category);
+      }
       if (allCategoryIds.length > 0) {
         whereMap.category_id = { in: allCategoryIds };
       }

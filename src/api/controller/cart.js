@@ -107,6 +107,9 @@ module.exports = class extends Base {
         goods_specifition_ids: productInfo.goods_specification_ids,
         checked: 1,
       };
+      if(this.getLoginUserId() == 0){
+        return this.fail(400, "请先登录");
+      }
 
       await this.model("cart").thenAdd(cartData, { product_id: productId });
     } else {

@@ -15,7 +15,9 @@ module.exports = class extends Base {
     const qiche = await this.model('goods').field(['id', 'name', 'retail_price', 'primary_pic_url']).where({'category_id': 67}).limit(12).select();
     const chaopai = await this.model('goods').field(['id', 'name', 'retail_price', 'primary_pic_url']).where({'category_id': 79}).limit(12).select();
     const jiayong = await this.model('goods').field(['id', 'name', 'retail_price', 'primary_pic_url']).where({'category_id': 162}).limit(12).select();
+    const ads = await this.model('ad').select();
     return this.success({
+      ads: ads,
       goods: goods,
       brands: brands,
       category: category,

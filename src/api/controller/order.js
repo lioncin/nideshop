@@ -9,7 +9,7 @@ module.exports = class extends Base {
    */
   async listAction() {
     const orderList = await this.model("order")
-      .where({ user_id: this.getLoginUserId(), order_status: 0 })
+      .where({ user_id: this.getLoginUserId()})
       .page(1, 10)
       .countSelect();
     const newOrderList = [];

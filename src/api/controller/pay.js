@@ -29,6 +29,7 @@ module.exports = class extends Base {
         total_fee: parseInt(orderInfo.actual_price * 100),
         spbill_create_ip: ''
       });
+      console.log(returnParams);
       return this.success(returnParams);
     } catch (err) {
       return this.fail(400, `微信支付失败 ${err.err_code_des || err.return_msg}`);

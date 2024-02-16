@@ -30,6 +30,9 @@ module.exports = class extends Base {
         spbill_create_ip: ''
       });
       console.log(returnParams);
+
+      //支付成功之后，更新订单的状态
+      await this.model('order').where({ id: orderId }).update({ pay_status: 1, order_status: 200 });
       return this.success(returnParams);
     } catch (err) {
       return this.fail(400, `微信支付失败 ${err.err_code_des || err.return_msg}`);

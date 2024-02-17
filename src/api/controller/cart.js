@@ -77,19 +77,20 @@ module.exports = class extends Base {
       // .where({ goods_id: goodsId, product_id: productId })
       .where({ goods_id: goodsId })
       .find();
+      console.log('林郁佳')
     if (think.isEmpty(cartInfo)) {
       // 添加操作
 
       // 添加规格名和值
-      let goodsSepcifitionValue = [];
-      if (!think.isEmpty(productInfo.goods_specification_ids)) {
-        goodsSepcifitionValue = await this.model("goods_specification")
-          .where({
-            goods_id: goodsId,
-            id: { in: productInfo.goods_specification_ids.split("_") },
-          })
-          .getField("value");
-      }
+      // let goodsSepcifitionValue = [];
+      // if (!think.isEmpty(productInfo.goods_specification_ids)) {
+      //   goodsSepcifitionValue = await this.model("goods_specification")
+      //     .where({
+      //       goods_id: goodsId,
+      //       id: { in: productInfo.goods_specification_ids.split("_") },
+      //     })
+      //     .getField("value");
+      // }
 
       // 添加到购物车
       const cartData = {
@@ -103,25 +104,27 @@ module.exports = class extends Base {
         user_id: this.getLoginUserId(),
         retail_price: goodsInfo.retail_price,
         market_price: goodsInfo.retail_price,
-        goods_specifition_name_value: goodsSepcifitionValue.join(";"),
+        goods_specifition_name_value: '',
         goods_specifition_ids: productInfo.goods_specification_ids,
         checked: 1,
       };
+      console.log(cartData)
       if(this.getLoginUserId() == 0){
         return this.fail(400, "请先登录");
       }
 
-      await this.model("cart").thenAdd(cartData, { product_id: productId });
+      // await this.model("cart").thenAdd(cartData, { product_id: productId });
+      await this.model("cart").thenAdd(cartData, { goods_id: goodsId });
     } else {
       // 如果已经存在购物车中，则数量增加
       if (productInfo.goods_number < number + cartInfo.number) {
         return this.fail(400, "库存不足");
       }
-
+      
       await this.model("cart")
         .where({
           goods_id: goodsId,
-          product_id: productId,
+          // product_id: productId,
           id: cartInfo.id,
         })
         .increment("number", number);
